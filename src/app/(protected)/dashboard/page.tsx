@@ -6,6 +6,7 @@ import Link from "next/link"
 import CommitLogComponent from "~/components/commit-log"
 import AskQuestionCard from "~/components/AskQuestionCard"
 import { LuGithub } from "react-icons/lu";
+import ArchiveButton from "~/components/archive-button"
 
 export default function DashBoard() {
 
@@ -24,6 +25,7 @@ export default function DashBoard() {
       </div>
 
          <div className="flex gap-2 items-center">
+            <ArchiveButton />
          </div>
     </div>
 
