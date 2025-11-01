@@ -65,7 +65,7 @@ model Project {
   githubToken String?
 
   // isIndexed   Boolean @default(false)
-  status ProjectStatus @default(READY)
+  status ProjectStatus @default(INDEXING)
 
   deletedAt DateTime?
 
