@@ -10,7 +10,6 @@ import { createProjectSchema } from "~/lib/zod"
 import { motion } from 'framer-motion'
 import { Loader, ArrowRight, Info, FileText, Key } from 'lucide-react'
 import { LuGithub } from "react-icons/lu";
-import axios, { AxiosError } from 'axios'
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 import { useProject } from "~/hooks/useProject"
@@ -18,7 +17,6 @@ import { useRouter } from "nextjs-toploader/app"
 import { checkCredits, checkRepoExists, updateProjectStatus } from "~/server/actions"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { useMutation } from "@tanstack/react-query"
 import { useIsRefetching } from "~/lib/store"
 import { api } from "~/trpc/react"
 
@@ -64,10 +62,9 @@ export default function CreatePage() {
       form.reset();
       await utils.user.getProjects.refetch();
       setProjectId(projectId);
+      indexProject.mutate({ projectId, repoURL });
       router.push("/dashboard");
       setTimeout(() => toast.info("Initializing project. Please wait...", { position: "top-center" }), 3000);
-
-      indexProject.mutate({ projectId, repoURL });
     },
     onError: (err) => {
       console.error(err);

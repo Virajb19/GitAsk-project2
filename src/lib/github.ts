@@ -47,20 +47,16 @@ export async function pollCommits(projectId: string, repoURL: string) {
 
    const commits = await getCommits(repoURL)
 
-   // existingCommits
    const processedCommits = await db.commit.findMany({ where: { projectId}, orderBy: { date: 'desc'}, select: { hash: true}})  
 
-   const existingHashes = new Set(processedCommits.map(c => c.hash))
-   const newCommits = commits.filter(commit => !existingHashes.has(commit.hash))
-
-   // newCommits
    const unprocessedCommits = commits.filter(commit => !processedCommits.some((processedCommit) => processedCommit.hash === commit.hash))
    
    if(unprocessedCommits.length === 0) return 0
 
-   const responses = await Promise.allSettled(unprocessedCommits.map(async (commit) => {
+   const responses = await Promise.allSettled(unprocessedCommits.map(async (commit, i) => {
       const { data } = await axios.get(`${repoURL}/commit/${commit?.hash}.diff`, { headers: { Accept: 'application/vnd.github.v3.diff'}})
       const summary = await summarizeCommit(data) || ""
+      console.log(`Summary - ${i} :`, summary)
       return summary
    }))
 

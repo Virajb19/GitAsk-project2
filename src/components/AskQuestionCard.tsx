@@ -14,6 +14,9 @@ import { useProject } from "~/hooks/useProject";
 import { toast } from "sonner";
 import MDEditor from '@uiw/react-md-editor'
 import { useQueryClient } from "@tanstack/react-query"
+import { askQuestion } from "~/server/actions";
+import { readStreamableValue } from "ai/rsc";
+import FileReference from "./file-reference";
 
 type Input = z.infer<typeof askQuestionSchema>
 
@@ -33,7 +36,24 @@ export default function AskQuestionCard() {
   })
 
   async function OnSubmit(data: Input) {
-   
+   if(data.question.length > 500) {
+      toast.error('Question is too big!')
+      return
+   }
+
+     setAnswer('')
+    try {
+            const { output, fileReferences} = await askQuestion(data.question, projectId)
+            setOpen(true)
+            setFileReferences(fileReferences)
+
+            for await (const text of readStreamableValue(output)) {
+               if(text) setAnswer(ans => ans += text)
+         }
+      } catch (err) {
+         setOpen(false)
+         toast.error('Something went wrong. Try again!!!')
+    } 
   }
 
    const handleClick = useCallback(async () => {
@@ -84,6 +104,7 @@ export default function AskQuestionCard() {
                             <MDEditor.Markdown source={answer}/>
                          )}
                      </div>
+                     <FileReference files={fileReferences}/>
                     <button onClick={() => setOpen(false)} className="bg-blue-600 rounded-sm py-2 text-lg font-bold hover:opacity-75 duration-200">Close</button>
               </DialogContent>
         </Dialog>
