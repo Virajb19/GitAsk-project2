@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { askQuestionSchema } from "~/lib/zod";
 import { z } from "zod";
 import { Loader2, Sparkles, Download, RefreshCw } from 'lucide-react';
 import { Dialog, DialogHeader, DialogContent, DialogTitle } from "./ui/dialog";
@@ -14,9 +13,10 @@ import { useProject } from "~/hooks/useProject";
 import { toast } from "sonner";
 import MDEditor from '@uiw/react-md-editor'
 import { useQueryClient } from "@tanstack/react-query"
-import { askQuestion } from "~/server/actions";
+import { askQuestion, saveQuestion } from "~/server/actions";
 import { readStreamableValue } from "ai/rsc";
 import FileReference from "./file-reference";
+import { askQuestionSchema } from '~/lib/zod'
 
 type Input = z.infer<typeof askQuestionSchema>
 
@@ -28,7 +28,7 @@ export default function AskQuestionCard() {
   const [answer,setAnswer] = useState('')
   const [loading,setLoading] = useState(false)
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient() 
 
   const form = useForm<Input>({
     resolver: zodResolver(askQuestionSchema),
@@ -57,8 +57,20 @@ export default function AskQuestionCard() {
   }
 
    const handleClick = useCallback(async () => {
+      const question = form.getValues('question')
+       
+      setLoading(true)
+      const res = await saveQuestion(question,answer,projectId,fileReferences)
+      setLoading(false)
 
- }, [answer,fileReferences,form,projectId,queryClient]) 
+      if(res.success) {
+         toast.success('Question saved!', { position: 'bottom-left'})
+         setOpen(false)
+         queryClient.refetchQueries({queryKey: ['getQuestions']})
+         form.setValue('question', '')
+      }
+      else toast.error(res.msg || 'Failed to save the answer. Try again!!!', { position: 'bottom-left'})
+   }, [answer,fileReferences,form,projectId,queryClient]) 
 
    useEffect(() => {
      const handleKeyDown = (e: KeyboardEvent) => {
