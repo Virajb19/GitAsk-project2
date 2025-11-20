@@ -1,9 +1,7 @@
 'use client'
 
 import { Question } from "@prisma/client";
-import { useQuery } from "@tanstack/react-query";
 import MDEditor from "@uiw/react-md-editor";
-import axios from "axios";
 import Image from "next/image";
 import { Fragment, useMemo, useState } from "react";
 import AskQuestionCard from "~/components/AskQuestionCard";
@@ -15,6 +13,8 @@ import { motion } from 'framer-motion'
 import { User } from "lucide-react";
 import DeleteButton from "~/components/DeleteButton";
 import { useSearchQuery } from "~/lib/store";
+import { api } from "~/trpc/react";
+import { toast } from "sonner"
 
 export type question = Question & { user: { ProfilePicture: string | null}}
 
@@ -24,22 +24,8 @@ export default function QApage() {
 
   const { projectId } = useProject()
   const { query } = useSearchQuery()
-
-  const {data: questions, isLoading, isError, isRefetching, isFetching} = useQuery<question[]>({
-    queryKey: ['getQuestions', projectId],
-    queryFn: async () => {
-        try {
-            // await new Promise(r => setTimeout(r, 7000))
-            const { data : { questions } } = await axios.get(`/api/questions/${projectId}`)
-            return questions
-         } catch(err) {
-             throw new Error('Some error occurred. Refresh')
-         }
-    },
-    refetchIntervalInBackground: true,
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 5 * 60 * 1000
-  })
+ 
+const {data: questions, isLoading, isError} = api.project.getQuestions.useQuery({projectId}, {refetchIntervalInBackground: true, refetchInterval: 5 * 60 * 1000, staleTime: 5 * 60 * 1000})
 
     const filteredQuestions = useMemo(() => {
       const words = query.toLowerCase().split(' ')
@@ -59,6 +45,8 @@ export default function QApage() {
                     return <Skeleton key={i} className="h-[10vh]"/>
                 })}
           </div>
+
+  // toast.success(JSON.stringify(questions))
 
   if(questions.length === 0) return <div className="flex flex-col grow mt-3 p-1">
        <AskQuestionCard />

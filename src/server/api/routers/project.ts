@@ -66,5 +66,23 @@ export const projectRouter = createTRPCRouter({
           await pollCommits(project.id, project.repoURL)
           
           return commits;
+     }),
+     getQuestions: protectedProcedure.input(z.object({projectId: z.string().cuid()})).query(async ({ctx, input}) => {
+          const { projectId } = input;
+
+          const project = await ctx.db.project.findUnique({ where: { id: projectId}, select: { id: true, repoURL: true}})
+          if(!project) throw new TRPCError({code: 'NOT_FOUND', message: 'project not found'});
+
+         const questions = await ctx.db.question.findMany({where: {id: projectId}, orderBy: {createdAt: 'desc'}, include: {user: {select: {ProfilePicture: true}}}})    
+         return questions      
+     }),
+     deleteQuestion: protectedProcedure.input(z.object({questionId: z.string().cuid()})).mutation(async ({ctx, input}) => {
+            const {questionId} = input
+
+            const question = await ctx.db.question.findUnique({where: {id: questionId}, select: {id: true}})
+            if(!question) throw new TRPCError({code: 'NOT_FOUND', message: 'question not found'})
+
+           await ctx.db.
      })
+  
 })
