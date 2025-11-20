@@ -73,7 +73,9 @@ export const projectRouter = createTRPCRouter({
           const project = await ctx.db.project.findUnique({ where: { id: projectId}, select: { id: true, repoURL: true}})
           if(!project) throw new TRPCError({code: 'NOT_FOUND', message: 'project not found'});
 
-         const questions = await ctx.db.question.findMany({where: {id: projectId}, orderBy: {createdAt: 'desc'}, include: {user: {select: {ProfilePicture: true}}}})    
+          
+          const questions = await ctx.db.question.findMany({where: {projectId: projectId}, orderBy: {createdAt: 'desc'}, include: {user: {select: {ProfilePicture: true}}}})    
+          console.log('Questions', questions)
          return questions      
      }),
      deleteQuestion: protectedProcedure.input(z.object({questionId: z.string().cuid()})).mutation(async ({ctx, input}) => {
