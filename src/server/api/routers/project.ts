@@ -82,7 +82,9 @@ export const projectRouter = createTRPCRouter({
             const question = await ctx.db.question.findUnique({where: {id: questionId}, select: {id: true}})
             if(!question) throw new TRPCError({code: 'NOT_FOUND', message: 'question not found'})
 
-           await ctx.db.
+           await ctx.db.question.delete({where: {id: question.id}});
+
+           return {msg: 'question deleted'}
      })
   
 })
