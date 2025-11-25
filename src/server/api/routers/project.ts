@@ -75,7 +75,7 @@ export const projectRouter = createTRPCRouter({
 
           
           const questions = await ctx.db.question.findMany({where: {projectId: projectId}, orderBy: {createdAt: 'desc'}, include: {user: {select: {ProfilePicture: true}}}})    
-          console.log('Questions', questions)
+          // console.log('Questions', questions)
          return questions      
      }),
      deleteQuestion: protectedProcedure.input(z.object({questionId: z.string().cuid()})).mutation(async ({ctx, input}) => {

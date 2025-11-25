@@ -1,14 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import axios from "axios"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useProject } from "~/hooks/useProject"
-import { question } from '~/app/(protected)/qa/page'
 import { api } from "~/trpc/react"
 
 export default function DeleteButton({questionId}: {questionId: string}) {
 
-    const queryClient = useQueryClient()
     const { projectId } = useProject()
 
     const utils = api.useUtils()
