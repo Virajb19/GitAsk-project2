@@ -11,6 +11,7 @@ import { twMerge } from "tailwind-merge";
 import { useRouter } from 'nextjs-toploader/app';
 import { useMediaQuery } from 'usehooks-ts'
 import { toast } from "sonner";
+import SearchInput from "./SearchInput";
 
 export default function Searchbar() {
 
@@ -49,7 +50,7 @@ useEffect(() => {
             {isOpen ? <X /> : <Menu />}
           </button>
 
-           {/* {isLargeScreen && <SearchInput />} */}
+           {isLargeScreen && <SearchInput />}
           <Search onClick={() => setShowModal(true)} className="sm:hidden cursor-pointer"/>
               
        </div>
