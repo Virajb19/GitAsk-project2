@@ -36,10 +36,13 @@ export const SignInSchema = z.object({
 export const createProjectSchema = z.object({
     name: z.string().min(1, {message: 'Provide a project name'}).max(25, { message: 'Project name cannot exceed 25 letters'}).trim(),
     repoURL: z.string().regex(githubRepoUrl, { message: 'Provide a valid repo URL'}).trim(),
-    // .refine(async url => await checkRepoExists(url), { message: 'This repository does not exist'}),
     githubToken: z.string().regex(githubAccessToken, { message: 'Provide a valid access token'}).trim().optional()
 })
 
 export const askQuestionSchema = z.object({
     question: z.string().trim().min(1, { message: 'Ask a question !'}).max(500, {message: 'Question is too big!'})
+})
+
+export const analyzePRSchema = z.object({
+    PRnumber: z.string().min(1, "PR number is required")
 })

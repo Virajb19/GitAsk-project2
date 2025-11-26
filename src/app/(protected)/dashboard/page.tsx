@@ -8,6 +8,7 @@ import AskQuestionCard from "~/components/AskQuestionCard"
 import { LuGithub } from "react-icons/lu";
 import ArchiveButton from "~/components/archive-button"
 import PollCommitsButton from "~/components/poll-comiits-button"
+import PRDialogCard from "~/components/PR-dialog-card"
 
 export default function DashBoard() {
 
@@ -33,6 +34,7 @@ export default function DashBoard() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-5 mt-1">
           <AskQuestionCard />
+          <PRDialogCard />
       </div>
 
        <CommitLogComponent />
