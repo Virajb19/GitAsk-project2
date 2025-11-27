@@ -44,6 +44,6 @@ export const askQuestionSchema = z.object({
 })
 
 export const analyzePRSchema = z.object({
-    githubRepoUrl: z.string().regex(githubRepoUrl, { message: 'Provide a valid repo URL'}).trim(),
-    PRnumber: z.number().min(1, "PR number is required")
+    githubRepoUrl: z.string().url(),
+    PRnumber: z.string().min(1, "PR number is required")
 })

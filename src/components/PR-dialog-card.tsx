@@ -15,7 +15,11 @@ import { useState } from "react";
 import { LuGithub } from "react-icons/lu";
 import Link from "next/link";
 
-type Input = z.infer<typeof analyzePRSchema>
+const schema = z.object({
+    prNumber: z.string().min(1, "PR Number is required")
+  });
+
+type Input = z.infer<typeof schema>
 
 export default function PRDialogCard() {
 
@@ -23,9 +27,10 @@ export default function PRDialogCard() {
 
     const [open, setOpen] = useState(false)
 
+    // toast.success(project?.repoURL)
+
     const form = useForm<Input>({
-        resolver: zodResolver(analyzePRSchema),
-        defaultValues: {githubRepoUrl: project?.repoURL}
+        resolver: zodResolver(schema),
     })
 
     const analyze = api.project.analyzePR.useMutation({
@@ -41,7 +46,7 @@ export default function PRDialogCard() {
     async function onSubmit(data: Input) {
          console.log('Submitted')
          toast.info('You will be charged 5 credits for each PR analysis', {position: 'bottom-right', duration: 3000})
-         await analyze.mutateAsync({...data})
+         await analyze.mutateAsync({githubRepoUrl: project?.repoURL ?? "", PRnumber: data.prNumber})
          setOpen(true)
     }
 
@@ -92,11 +97,11 @@ export default function PRDialogCard() {
 
    <Link
         target="_blank" rel="noopener noreferrer"
-        href={`${project?.repoURL}/pull/${form.watch("PRnumber") ?? ""}` ?? "#"}
+        href={`${project?.repoURL}/pull/${form.watch("prNumber") ?? ""}` ?? "#"}
         className="bg-gray-900 hover:bg-black duration-200 text-white py-2 px-4 rounded-xl transition-all text-sm text-white/80 hover:underline inline-flex items-center font-medium gap-2 group"
         >
         <LuGithub className="w-5 h-5" strokeWidth={2.5} />
-            {`${project?.repoURL}/pull/${form.watch("PRnumber") ?? ""}` ?? 'No Link found'}
+            {`${project?.repoURL}/pull/${form.watch("prNumber") ?? ""}` ?? 'No Link found'}
         <ExternalLink className="size-5 group-hover:translate-x-1 group-hover:-translate-y-1 duration-300"/>
     </Link>
 
@@ -127,11 +132,11 @@ export default function PRDialogCard() {
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex flex-col items-center w-full">
                                 <FormField
                                     name="prNumber"
-                                    render={() => ( 
+                                    render={({field}) => ( 
                                     <FormItem className="flex flex-col gap-1 items-start w-full">
                                         <FormLabel className="text-xl font-semibold">PR Number</FormLabel>
                                         <FormControl>
-                                            <input type="number" placeholder="e.g. 42" className="input-style w-full" />
+                                            <input {...field} type="text" placeholder="e.g. 42" className="input-style w-full" />
                                         </FormControl>
                                        <FormMessage className="text-base text-red-500 font-semibold"/>
                                     </FormItem>

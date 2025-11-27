@@ -100,7 +100,7 @@ export const projectRouter = createTRPCRouter({
 
           if(user.credits < 5) throw new TRPCError({code: 'FORBIDDEN', message: 'Not enough credits'})
 
-          const result = await computePrRisk(githubRepoUrl, PRnumber)
+          const result = await computePrRisk(githubRepoUrl, parseInt(PRnumber))
 
           await ctx.db.user.update({where: {id: user.id}, data: {credits: {decrement: 5}}})
 
