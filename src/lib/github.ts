@@ -144,6 +144,32 @@ const CONFIG = {
       if(!owner || !repo) throw new Error('Invalid Github URL')
       const octokit = getOctokitClient()
 
+      try {
+         const prCheck = await octokit.rest.pulls.get({
+           owner,
+           repo,
+           pull_number: prNumber,
+         });
+
+         console.log('PR data', prCheck.data)
+     
+         if (!prCheck || !prCheck.data) {
+          //  return { score: 0, components: {}, message: `PR #${prNumber} not found` };
+            throw new Error('PR_NOT_FOUND')
+         }
+     
+         if (prCheck.data.state === "closed") {
+          //  return { score: 0, components: {}, message: `PR #${prNumber} is closed` };
+            throw new Error('PR_CLOSED')
+         }
+       } catch (err: any) {
+         if (err.status === 404) {
+            throw new Error('PR_NOT_FOUND')
+         }
+         return { score: 0, components: {}, message: "Error fetching PR details" };
+       }
+     
+
      const filesRes = await octokit.rest.pulls.listFiles({owner, repo, pull_number: prNumber, per_page: 100})
 
      const files = filesRes.data || [];
@@ -187,12 +213,13 @@ const CONFIG = {
          totalAdditions,
          totalDeletions,
          totalLines,
-         avgChurn,
+         avgChurn: Number(avgChurn.toFixed(3)),
          churnNorm,
          totalBugHits,
          bugNorm,
          rawScore,
-         }
+         },
+         message: 'Success'
       };
  } 
 

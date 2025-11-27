@@ -95,16 +95,29 @@ export const projectRouter = createTRPCRouter({
           const { PRnumber, githubRepoUrl} = input;
 
           const user = await ctx.db.user.findUnique({where: {id: userId}, select: {credits: true, id: true}})
-
           if(!user) throw new TRPCError({code: 'NOT_FOUND', message: 'user not found'})
 
           if(user.credits < 5) throw new TRPCError({code: 'FORBIDDEN', message: 'Not enough credits'})
 
-          const result = await computePrRisk(githubRepoUrl, parseInt(PRnumber))
-
-          await ctx.db.user.update({where: {id: user.id}, data: {credits: {decrement: 5}}})
-
-          return result;
+               try {
+                    const result = await computePrRisk(githubRepoUrl, PRnumber);
+                
+                    // Always deduct credits after work is done What If there is an error ?
+                    await ctx.db.user.update({where: {id: user.id}, data: {credits: {decrement: 5}}})
+                
+                    return result
+                
+                  } catch (error: any) {
+                
+                    if (error?.message?.includes("NOT_FOUND")) {
+                      throw new TRPCError({ code: "NOT_FOUND", message: "PR number does not exist" });
+                    }
+                
+                    if (error?.message?.includes("PR_CLOSED")) {
+                      throw new TRPCError({ code: "CONFLICT", message: "Pull request is closed" });
+                    }
+                
+                    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to analyze PR" });
+                  }
      })
-  
 })

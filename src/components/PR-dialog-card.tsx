@@ -16,7 +16,7 @@ import { LuGithub } from "react-icons/lu";
 import Link from "next/link";
 
 const schema = z.object({
-    prNumber: z.string().min(1, "PR Number is required")
+    prNumber: z.coerce.number().min(1, "PR Number is required")
   });
 
 type Input = z.infer<typeof schema>
@@ -39,7 +39,33 @@ export default function PRDialogCard() {
         },
         onError: (err) => {
            console.log(err)
-           toast.error('Error analyzing PR', {position: 'bottom-right'})
+
+           if (err.message.includes("PR number does not exist")) {
+             toast.error("PR number not found. Please check and try again.", {
+               position: "bottom-right",
+               icon: '❌'
+             })
+             return
+           }
+       
+           if (err.message.includes("Pull request is closed")) {
+             toast.error("This PR is closed. Only open PRs can be analyzed.", {
+               position: "bottom-right",
+               icon: '⚠️'
+             })
+             return
+           }
+       
+           if (err.message.includes("Not enough credits")) {
+             toast.error("Not enough credits", {
+               position: "bottom-right",
+             })
+             return
+           }
+       
+           toast.error("Something went wrong. Try again later.", {
+             position: "bottom-right",
+           })
         }
     })
 
@@ -122,7 +148,7 @@ export default function PRDialogCard() {
                         <motion.span animate={{rotate: [0, 90, 90, 180, 180, 270, 270, 360]}} style={{display: "inline-block"}} transition={{duration: 3, repeat: Infinity, ease: 'linear'}}>
                         <GitPullRequest className="w-5 h-5 text-blue-300" strokeWidth={3}/>
                         </motion.span>
-                        <h4 className="uppercase font-bold">Pull request tools</h4>
+                        <h4 className="uppercase font-bold text-xl">Pull request Analyzer</h4>
                     </CardTitle>
                     <CardDescription className="text-lg font-semibold text-center">Enter PR number to run analysis</CardDescription>
                 </CardHeader>
