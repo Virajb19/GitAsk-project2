@@ -1,8 +1,8 @@
-import { createProjectSchema } from '~/lib/zod';
+import { analyzePRSchema, createProjectSchema } from '~/lib/zod';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { pollCommits } from '~/lib/github';
+import { computePrRisk, pollCommits } from '~/lib/github';
 import { startIndexing } from '~/lib/github-loader';
 
 const bodySchema = createProjectSchema.extend({
@@ -87,6 +87,24 @@ export const projectRouter = createTRPCRouter({
            await ctx.db.question.delete({where: {id: question.id}});
 
            return {msg: 'question deleted'}
+     }),
+     analyzePR: protectedProcedure.input(analyzePRSchema).mutation(async ({ctx, input}) => {
+           
+          const userId = parseInt(ctx.session.user.id);
+
+          const { PRnumber, githubRepoUrl} = input;
+
+          const user = await ctx.db.user.findUnique({where: {id: userId}, select: {credits: true, id: true}})
+
+          if(!user) throw new TRPCError({code: 'NOT_FOUND', message: 'user not found'})
+
+          if(user.credits < 5) throw new TRPCError({code: 'FORBIDDEN', message: 'Not enough credits'})
+
+          const result = await computePrRisk(githubRepoUrl, PRnumber)
+
+          await ctx.db.user.update({where: {id: user.id}, data: {credits: {decrement: 5}}})
+
+          return result;
      })
   
 })
