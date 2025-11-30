@@ -23,7 +23,7 @@ export const authConfig = {
     callbacks: {
         jwt: async ({token}) => {
           if(token && token.sub) {
-            const existingUser = await db.user.findFirst({where: { OR: [{OauthId: token.sub}, { id: !isNaN(Number(token.sub)) ? parseInt(token.sub) : undefined}, { email: token.email as string}]}, select: {id: true, credits: true}})
+            const existingUser = await db.user.findFirst({ where: { OR: [{ OauthId: token.sub }, { id: Number(token.sub) || undefined }, { email: token.email as string }] }, select: { id: true, credits: true }});
             if(existingUser) {
               token.id = existingUser.id.toString()
               token.credits = existingUser.credits
@@ -47,8 +47,8 @@ export const authConfig = {
         
                const provider = account.provider === 'github' ? 'GITHUB' : 'GOOGLE'
                  // check if Oauth Id changes ? 
-                const existingUser = await db.user.findFirst({where: { OR: [{email: user.email!}, {OauthId: user.id}]}, select: {id: true}})
-                if(existingUser) {
+                 const existingUser = await db.user.findFirst({ where: { OR: [{ email: user.email! }, { OauthId: user.id }] }, select: { id: true }});
+                 if(existingUser) {
                   await db.user.update({
                    where: {id: existingUser.id},
                    data: {lastLogin: new Date(), username: user.name ?? undefined, email: user.email ?? undefined, ProfilePicture: user.image, OauthProvider: provider, OauthId: user.id}

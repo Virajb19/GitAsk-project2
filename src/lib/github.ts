@@ -2,7 +2,6 @@ import { Octokit } from 'octokit'
 import { summarizeCommit } from './gemini'
 import axios from 'axios'
 import { db } from '~/server/db'
-import { NumberSchema } from '@google/generative-ai';
 
 let octokit: Octokit | null = null;
 
@@ -92,7 +91,10 @@ const CONFIG = {
      churn: 1.2,
      bugs: 2.0
    }
- };
+ }
+
+
+ const KEYWORDS = ["fix","bug","patch","hotfix","resolve","issue","repair","defect","broken"]
 
  function clamp01(v: number) {
    return Math.max(0, Math.min(1, v));
@@ -122,15 +124,67 @@ const CONFIG = {
             const res = await octokit.rest.repos.listCommits({owner, repo, path , per_page: 100})
 
             const commits = res.data || [];
+            const processedPRs = new Set<string>()
             let bugCount = 0;
 
-            for(const c of commits) {
-               const msg = (c.commit.message || "").toLowerCase()
-               if(msg.includes("fix") || msg.includes("bug") || msg.includes("patch") || msg.includes("hotfix")) {
-                  bugCount++;
-                  if(bugCount >= cap) break;
+            // for(const c of commits) {
+            //    const msg = (c.commit.message || "").toLowerCase()
+            //    if(msg.includes("fix") || msg.includes("bug") || msg.includes("patch") || msg.includes("hotfix")) {
+            //       bugCount++;
+            //       if(bugCount >= cap) break;
+            //    }
+            // }
+
+            for(const commit of commits) {
+               if (!commit.sha) continue;
+
+               const commitDetails = await octokit.rest.repos.getCommit({
+                 owner,
+                 repo,
+                 ref: commit.sha,
+               });
+         
+               const msg = (commitDetails.data.commit.message || "").toLowerCase();
+               const hasMessageBug =
+                 KEYWORDS.some((k) => msg.includes(k));
+         
+               let prBugDetected = false;
+         
+               const associatedPRs =
+                 await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+                   owner,
+                   repo,
+                   commit_sha: commit.sha,
+                 });
+         
+               for (const pr of associatedPRs.data) {
+                 const title = pr.title.toLowerCase();
+                 const body = (pr.body || "").toLowerCase();
+         
+                 const hasPRKeyword =
+                   KEYWORDS.some((k) => title.includes(k) || body.includes(k));
+         
+                 const hasBugLabel =
+                   pr.labels?.some((l) =>
+                     (l.name || "").toLowerCase().includes("bug")
+                   ) ?? false;
+         
+                 if (hasPRKeyword || hasBugLabel) {
+                   if (!processedPRs.has(String(pr.number))) {
+                     processedPRs.add(String(pr.number));
+                     prBugDetected = true;
+                     break;
+                   }
+                 }
                }
+         
+               if (hasMessageBug || prBugDetected) {
+                 bugCount++;
+                 if (bugCount >= cap) break;
+               }
+         
             }
+
             return Math.min(bugCount, cap)
 
         } catch(err) {
